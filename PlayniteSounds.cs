@@ -1613,7 +1613,7 @@ namespace PlayniteSounds
 
         private List<string> SelectMusicForDirectory(string directory)
         {
-            var newMusicFiles = PlayniteApi.Dialogs.SelectFiles("Music Files(*.mp3;*.wav;*.ogg;*.flac)|*.mp3;*.wav;*.ogg;*.flac") ?? new List<string>();
+            var newMusicFiles = PlayniteApi.Dialogs.SelectFiles("Music Files(*.mp3;*.wav;*.flac;*.wma;*.aif;*.m4a;*.aac;*.mid)|*.mp3;*.wav;*.flac;*.wma;*.aif;*.m4a;*.aac;*.mid") ?? new List<string>();
 
             foreach (var musicFile in newMusicFiles)
             {

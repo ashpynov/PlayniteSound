@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Playnite.SDK.Data;
 using PlayniteSounds.ViewModels;
+using System.Text.RegularExpressions;
 
 namespace PlayniteSounds.Downloaders
 {
@@ -28,8 +29,12 @@ namespace PlayniteSounds.Downloaders
         List<YoutubeItem> _items = new List<YoutubeItem>();
         public List<YoutubeItem> Results { get => _items; }
 
-        private const string youtubeItemsListPathPlaylist = "..playlistRenderer";
-        private const string youtubeContinuationTokenPath = "..continuationCommand.token";
+        private const string Parser_Playlists = "..lockupViewModel";
+        private const string Parser_Playlist_Name = "metadata.lockupMetadataViewModel.title.content";
+        private const string Parser_Playlist_Id = "contentId";
+        private const string Parser_Playlist_Thumbnail = "contentImage..image.sources[0].url";
+        private const string Parser_Playlist_Count = "contentImage..overlays[?(@..imageName=='PLAYLISTS')]..text";
+        private const string Parser_ContinuationToken = "..continuationCommand.token";
         private const string youtubeVisitorDataPath = "..visitorData";
         private const string youtubeplaylistVideoPath = "..playlistPanelVideoRenderer";
 
@@ -103,19 +108,19 @@ namespace PlayniteSounds.Downloaders
         private void ParseSearchResult(string json)
         {
             dynamic jo = Serialization.FromJson<dynamic>(json);
-            var playlists = new List<dynamic>(jo.SelectTokens(youtubeItemsListPathPlaylist));
+            var playlists = new List<dynamic>(jo.SelectTokens(Parser_Playlists));
 
             foreach (var x in playlists) {
                 _items.Add(new YoutubeItem
                 {
-                    Id = x.SelectToken("playlistId")?.ToString(),
-                    Title = x.SelectToken("title.simpleText")?.ToString(),
-                    ThumbnailUrl = new Uri(x.SelectToken("thumbnails[0].thumbnails[0].url")?.ToString()),
-                    Count = uint.Parse(x.SelectToken("videoCount").ToString())
+                    Id = x.SelectToken(Parser_Playlist_Id)?.ToString(),
+                    Title = x.SelectToken(Parser_Playlist_Name)?.ToString(),
+                    ThumbnailUrl = new Uri(x.SelectToken(Parser_Playlist_Thumbnail)?.ToString()),
+                    Count = uint.Parse(Regex.Replace(x.SelectToken(Parser_Playlist_Count)?.ToString()??"0", "[^0-9]",""))
                 });
             }
 
-            continuationToken = jo.SelectToken(youtubeContinuationTokenPath)?.ToString();
+            continuationToken = jo.SelectToken(Parser_ContinuationToken)?.ToString();
         }
 
         #endregion

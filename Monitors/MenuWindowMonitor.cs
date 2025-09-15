@@ -10,7 +10,7 @@ using Playnite.SDK.Controls;
 using PlayniteSounds.Controls;
 using PlayniteSounds.Models;
 
-namespace PlayniteSounds
+namespace PlayniteSounds.Monitors
 {
 
     public class MenuWindowMonitor

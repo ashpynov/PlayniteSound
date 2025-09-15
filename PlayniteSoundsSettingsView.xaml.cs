@@ -1,5 +1,6 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Markup;
 
 namespace PlayniteSounds
 {
@@ -10,7 +11,7 @@ namespace PlayniteSounds
         public PlayniteSoundsSettingsView(PlayniteSounds plugin)
         {
             _plugin = plugin;
-            InitializeComponent();
+            ((IComponentConnector)this).InitializeComponent();
         }
 
         private void ButReloadAudio_Click(object sender, RoutedEventArgs e)

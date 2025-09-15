@@ -9,6 +9,7 @@ using System.Windows.Data;
 using PlayniteSounds.Downloaders;
 using PlayniteSounds.Models;
 using System.IO;
+using System.Windows.Markup;
 
 
 namespace PlayniteSounds.Views
@@ -47,7 +48,7 @@ namespace PlayniteSounds.Views
     {
         public MusicSelectionView()
         {
-            InitializeComponent();
+            ((IComponentConnector)this).InitializeComponent();
             Loaded += MusicSelectionView_Loaded;
             Unloaded += MusicSelectionView_Unloaded;
             ListSearch.SelectionChanged += ListSearch_OnSelectionChanged;

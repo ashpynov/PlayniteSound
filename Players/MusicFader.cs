@@ -1,18 +1,16 @@
 using System;
 using System.Timers;
 using System.Windows;
-using System.Windows.Media;
-using System.Windows.Media.Animation;
 using Playnite.SDK;
 using PlayniteSounds.Models;
 
-namespace PlayniteSounds
+namespace PlayniteSounds.Players
 {
     public class MusicFader
     {
         private static readonly ILogger Logger = LogManager.GetLogger();
 
-        private readonly MediaPlayer player;
+        private readonly IMusicPlayer player;
         private readonly PlayniteSoundsSettings settings;
         private Timer fadeTimer;
 
@@ -26,7 +24,7 @@ namespace PlayniteSounds
         DateTime lastCall;
         DateTime lastTickCall = default;
 
-        public MusicFader(MediaPlayer player, PlayniteSoundsSettings settings)
+        public MusicFader(IMusicPlayer player, PlayniteSoundsSettings settings)
         {
             this.player = player;
             this.settings = settings;
@@ -61,7 +59,7 @@ namespace PlayniteSounds
 
             double fadeStep = musicVolume / (settings.FadeDuration * fadeFrequency);
 
-            if (isFadingOut && player?.Clock?.CurrentState == ClockState.Active)
+            if (isFadingOut && player?.IsActive == true)
             {
                 player.Volume = (player.Volume > fadeStep) ? player.Volume - fadeStep : 0;
                 //Logger.Trace($"Fading Out: Volume: {player.Volume}");
@@ -114,7 +112,7 @@ namespace PlayniteSounds
         public void Pause()
         {
             isFadingOut = true;
-            pauseAction = player.Clock.Controller.Pause;
+            pauseAction = player.Pause;
             EnsureTimer();
         }
 
@@ -147,7 +145,7 @@ namespace PlayniteSounds
                 }
                 else
                 {
-                    player.Clock.Controller.Resume();
+                    player.Resume();
                 }
                 isPaused = false;
                 isFadingOut = false;

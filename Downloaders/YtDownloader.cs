@@ -10,6 +10,7 @@ using Playnite.SDK;
 using PlayniteSounds.Models;
 using PlayniteSounds.Common;
 using PlayniteSounds.ViewModels;
+using PlayniteSounds.Common.Extensions;
 
 
 namespace PlayniteSounds.Downloaders
@@ -112,18 +113,14 @@ namespace PlayniteSounds.Downloaders
 
         private bool DownloadSongFromYoutubeDl(Song song, string path, CancellationToken cancellationToken)
         {
-            string downloader = _settings.YtDlpPath;
-            string arguments = string.Format(youtubeDLArg, _settings.FFmpegPath, BaseUrl(), song.Id, path);
-            string workDir = Path.GetDirectoryName(_settings.YtDlpPath);
+            string downloader = PathExt.GetFullPath(_settings.YtDlpPath);
+            string arguments = string.Format(youtubeDLArg, PathExt.GetFullPath(_settings.FFmpegPath), BaseUrl(), song.Id, path);
+            string workDir = Path.GetDirectoryName(downloader);
 
             try
             {
                 Logger.Debug($"Starting downloader: {downloader}, {arguments}, {workDir}");
                 var startupPath = downloader;
-                if (downloader.Contains(".."))
-                {
-                    startupPath = Path.GetFullPath(downloader);
-                }
 
                 var info = new ProcessStartInfo(startupPath)
                 {

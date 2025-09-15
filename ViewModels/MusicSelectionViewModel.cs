@@ -12,6 +12,7 @@ using System.Windows.Media;
 using PlayniteSounds.Downloaders;
 using PlayniteSounds.Models;
 using PlayniteSounds.Views;
+using PlayniteSounds.Players;
 
 namespace PlayniteSounds.ViewModels
 {
@@ -25,8 +26,7 @@ namespace PlayniteSounds.ViewModels
 
         private IDialogsFactory Dialogs => PlayniteApi.Dialogs;
 
-        private MediaPlayer _musicPlayer;
-        private MediaTimeline _timeLine;
+        private IMusicPlayer _musicPlayer;
 
         private string _currentlyPreview;
         public string CurrentlyPreview
@@ -216,9 +216,8 @@ namespace PlayniteSounds.ViewModels
             window.Owner = PlayniteApi.Dialogs.GetCurrentAppWindow();
             window.WindowStartupLocation = WindowStartupLocation.CenterOwner;
 
-            _musicPlayer = new MediaPlayer();
+            _musicPlayer = MusicPlayer.Create();
             _musicPlayer.MediaEnded += MediaEnded;
-            _timeLine = new MediaTimeline();
 
             return window.ShowDialog();
         }
@@ -243,8 +242,7 @@ namespace PlayniteSounds.ViewModels
 
         private void StopPreview()
         {
-            _musicPlayer.Clock?.Controller.Stop();
-            _musicPlayer.Clock = null;
+            _musicPlayer.Stop();
             _musicPlayer.Close();
             CurrentlyPreview = null;
         }
@@ -263,9 +261,8 @@ namespace PlayniteSounds.ViewModels
         {
             MuteMusic();
             CurrentlyPreview = path;
-            _timeLine.Source = new Uri(path);
-            _musicPlayer.Clock = _timeLine.CreateClock();
-            _musicPlayer.Clock.Controller.Begin();
+            _musicPlayer.Load(path);
+            _musicPlayer.Play();
         }
 
         private void PreviewMusic(Song song)

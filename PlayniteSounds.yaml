@@ -1,5 +1,12 @@
 AddonId: 'Playnite.Sounds.Mod.baf1744c-72f6-4bc1-92cc-474403b279fb'
 Packages:
+  - Version: 5.8.1
+    RequiredApiVersion: 6.11.0
+    ReleaseDate: 2025-09-15
+    PackageUrl: https://github.com/ashpynov/PlayniteSound/releases/download/v5.8.1/Playnite.Sounds.Mod.baf1744c-72f6-4bc1-92cc-474403b279fb_5_8_1.pext
+    Changelog:
+      - Fallback to SDL Mixer media player (used by Playnite) as fallback if Windows Media Player Legacy (App) is not installed #34, #37
+      - Support of relative paths in settings #30
   - Version: 5.7.23
     RequiredApiVersion: 6.11.0
     ReleaseDate: 2025-04-01

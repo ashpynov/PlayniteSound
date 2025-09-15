@@ -1,5 +1,6 @@
 ﻿using Playnite.SDK;
 using Playnite.SDK.Data;
+using PlayniteSounds.Common.Extensions;
 using PlayniteSounds.Models;
 using System;
 using System.Collections.Generic;
@@ -140,13 +141,13 @@ namespace PlayniteSounds
             errors = new List<string>();
             var outcome = true;
 
-            if (!string.IsNullOrEmpty(Settings.FFmpegPath) && !File.Exists(Settings.FFmpegPath))
+            if (!string.IsNullOrEmpty(Settings.FFmpegPath) && !File.Exists(PathExt.GetFullPath(Settings.FFmpegPath)))
             {
                 errors.Add($"The path to FFmpeg '{Settings.FFmpegPath}' is invalid");
                 outcome = false;
             }
 
-            if (!string.IsNullOrEmpty(Settings.YtDlpPath) && !File.Exists(Settings.YtDlpPath))
+            if (!string.IsNullOrEmpty(Settings.YtDlpPath) && !File.Exists(PathExt.GetFullPath(Settings.YtDlpPath)))
             {
                 errors.Add($"The path to Yt-Dlp '{Settings.YtDlpPath}' is invalid");
                 outcome = false;

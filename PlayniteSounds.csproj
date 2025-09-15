@@ -45,7 +45,7 @@
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
     </ItemGroup>
-        <ItemGroup>
+    <ItemGroup>
         <None Include="Sound Files/*.*">
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
@@ -55,4 +55,12 @@
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
     </ItemGroup>
+
+    <!-- ADD THIS SECTION -->
+    <Target Name="IncludeGeneratedXamlFiles" BeforeTargets="CoreCompile">
+        <ItemGroup>
+            <Compile Include="$(IntermediateOutputPath)**\*.g.cs" />
+        </ItemGroup>
+    </Target>
+    <!-- END OF ADDED SECTION -->
 </Project>

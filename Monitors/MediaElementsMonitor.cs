@@ -13,7 +13,7 @@ using System;
 using System.Runtime.Serialization.Formatters;
 using System.Windows.Input;
 
-namespace PlayniteSounds
+namespace PlayniteSounds.Monitors
 {
     class MediaElementsMonitor
     {

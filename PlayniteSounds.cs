@@ -8,7 +8,6 @@ using System.Linq;
 using System.Reflection;
 using System.Windows.Controls;
 using System.Windows.Media;
-using System.Windows.Input;
 using System.Runtime.InteropServices;
 using System.Media;
 using System.ComponentModel;
@@ -24,9 +23,10 @@ using PlayniteSounds.Common.Constants;
 using PlayniteSounds.Models;
 using PlayniteSounds.Controls;
 using PlayniteSounds.ViewModels;
+using PlayniteSounds.Players;
+using PlayniteSounds.Monitors;
 using System.Threading.Tasks;
-using System.Data;
-using System.Windows.Media.Animation;
+using PlayniteSounds.Common.Extensions;
 
 namespace PlayniteSounds
 {
@@ -91,9 +91,9 @@ namespace PlayniteSounds
 
         private readonly Dictionary<string, PlayerEntry> _players = new Dictionary<string, PlayerEntry>();
 
-        private MediaPlayer _musicPlayer;
+        private IMusicPlayer _musicPlayer;
         private MusicFader _musicFader;
-        private readonly MediaTimeline _timeLine;
+
 
         private readonly List<GameMenuItem> _gameMenuItems;
         private readonly List<MainMenuItem> _mainMenuItems;
@@ -142,14 +142,11 @@ namespace PlayniteSounds
                 };
 
                 Localization.SetPluginLanguage(PluginFolder, api.ApplicationSettings.Language);
-                _musicPlayer = new MediaPlayer();
+                _musicPlayer = MusicPlayer.Create();
                 _musicPlayer.MediaEnded += MediaEnded;
                 _musicPlayer.MediaFailed += MediaFailed;
                 _musicFader = new MusicFader(_musicPlayer, Settings);
-                _timeLine = new MediaTimeline();
-                //{
-                //    RepeatBehavior = RepeatBehavior.Forever
-                //};
+
 
                 _gameMenuItems = new List<GameMenuItem>
                 {
@@ -761,7 +758,7 @@ namespace PlayniteSounds
             if (_isPlayingBackgroundMusic)
             {
                 _lastBackgroundMusicFileName = _prevMusicFileName;
-                _backgroundMusicPausedOnTime = _musicPlayer.Clock?.CurrentTime ?? default;
+                _backgroundMusicPausedOnTime = _musicPlayer.CurrentTime ?? default;
                 _isPlayingBackgroundMusic = false;
             }
         }
@@ -820,7 +817,7 @@ namespace PlayniteSounds
         {
             if (ShouldPlayMusic())
             {
-                if (_musicPlayer?.Clock != null)
+                if (_musicPlayer?.IsLoaded == true)
                 {
                     Try(()=>_musicFader?.Resume());
                 }
@@ -833,7 +830,7 @@ namespace PlayniteSounds
 
         private void PauseMusic()
         {
-            if (_musicPlayer?.Clock != null)
+            if (_musicPlayer?.IsLoaded == true)
             {
                 Try(()=>_musicFader?.Pause());
             }
@@ -841,7 +838,7 @@ namespace PlayniteSounds
 
         private void CloseMusic()
         {
-            if (_musicPlayer?.Clock != null)
+            if (_musicPlayer?.IsLoaded == true)
             {
                 Try(() => _musicFader?.Switch(SubCloseMusic, null));
             }
@@ -854,7 +851,6 @@ namespace PlayniteSounds
                 return;
             }
 
-            _musicPlayer.Clock = null;
             _musicPlayer.Close();
 
             SettingsModel.Settings.CurrentMusicName = string.Empty;
@@ -899,11 +895,11 @@ namespace PlayniteSounds
             if (File.Exists(filePath))
             {
                 _prevMusicFileName = filePath;
-                _timeLine.Source = new Uri(filePath);
-                _musicPlayer.Clock = _timeLine.CreateClock();
+                _musicPlayer.Load(filePath);
+                _musicPlayer.Play();
                 if (startFrom != default)
                 {
-                    _musicPlayer.Clock.Controller.Seek(startFrom, TimeSeekOrigin.BeginTime);
+                    _musicPlayer.Seek(startFrom);
                 }
                 _musicEnded = false;
                 SettingsModel.Settings.CurrentMusicName = Path.GetFileNameWithoutExtension(filePath);
@@ -940,8 +936,8 @@ namespace PlayniteSounds
             }
             else
             {
-                entry.MediaPlayer.Stop();
-                entry.MediaPlayer.Play();
+                entry.MusicPlayer.Stop();
+                entry.MusicPlayer.Play();
             }
         }
 
@@ -963,8 +959,8 @@ namespace PlayniteSounds
             else
             {
                 // MediaPlayer can play multiple sounds together from multiple instances, but the SoundPlayer can not
-                entry.MediaPlayer = new MediaPlayer();
-                entry.MediaPlayer.Open(new Uri(fullFileName));
+                entry.MusicPlayer = MusicPlayer.Create();
+                entry.MusicPlayer.Load(fullFileName);
             }
 
             return _players[fileName] = entry;
@@ -983,15 +979,15 @@ namespace PlayniteSounds
 
         private static void CloseAudioFile(PlayerEntry entry)
         {
-            if (entry.MediaPlayer != null)
+            if (entry.MusicPlayer != null)
             {
-                var filename = entry.MediaPlayer.Source == null
+                var filename = entry.MusicPlayer.Source == null
                     ? string.Empty
-                    : entry.MediaPlayer.Source.LocalPath;
+                    : entry.MusicPlayer.Source;
 
-                entry.MediaPlayer.Stop();
-                entry.MediaPlayer.Close();
-                entry.MediaPlayer = null;
+                entry.MusicPlayer.Stop();
+                entry.MusicPlayer.Close();
+                entry.MusicPlayer = null;
                 if (File.Exists(filename))
                 {
                     var fileInfo = new FileInfo(filename);
@@ -1023,10 +1019,10 @@ namespace PlayniteSounds
                 ReloadMusic = true;
                 ReplayMusic();
             }
-            else if (_musicPlayer.Clock != null)
+            else if (_musicPlayer.IsLoaded)
             {
-                _musicPlayer.Clock.Controller.Stop();
-                _musicPlayer.Clock.Controller.Begin();
+                _musicPlayer.Stop();
+                _musicPlayer.Play();
             }
         }
 
@@ -1879,10 +1875,10 @@ namespace PlayniteSounds
                 RedirectStandardOutput = true,
                 CreateNoWindow = true,
                 UseShellExecute = false,
-                FileName = Settings.FFmpegNormalizePath
+                FileName = PathExt.GetFullPath(Settings.FFmpegNormalizePath)
             };
 
-            info.EnvironmentVariables["FFMPEG_PATH"] = Settings.FFmpegPath;
+            info.EnvironmentVariables["FFMPEG_PATH"] = PathExt.GetFullPath(Settings.FFmpegPath);
 
             var stdout = string.Empty;
             var stderr = string.Empty;

@@ -30,6 +30,7 @@
 
 	<sys:String x:Key="LOC_PLAYNITESOUNDS_Normalize">Автоматически нормализовать громкость при загрузке</sys:String>
 	<sys:String x:Key="LOC_PLAYNITESOUNDS_Normalize_Tag">Отметить нормализованные игры</sys:String>
+	<sys:String x:Key="LOC_PLAYNITESOUNDS_ChkUseWMPLegacyApp">Использовать встроенный Windows Media Player (если доступно)</sys:String>
 	<sys:String x:Key="LOC_PLAYNITESOUNDS_FF_Path">Путь к ffmpeg:</sys:String>
 	<sys:String x:Key="LOC_PLAYNITESOUNDS_FF_Hint">Для нормализации и загрузки аудио требуется FFmpeg</sys:String>
 	<sys:String x:Key="LOC_PLAYNITESOUNDS_FFNorm_Path">Путь к ffmpeg-normalize:</sys:String>
@@ -136,6 +137,8 @@
 	<sys:String x:Key="LOC_PLAYNITESOUNDS_TimeoutError">Прервано по таймауту</sys:String>
     <sys:String x:Key="LOC_PLAYNITESOUNDS_WereError">Одна или несколько ошибок произошли во время загрузки:</sys:String>
 	<sys:String x:Key="LOC_PLAYNITESOUNDS_SkipLabel">Пропустить</sys:String>
+	<sys:String x:Key="LOC_PLAYNITESOUNDS_InstallWMP">Включить или выключить компоненты Windows</sys:String>
+	<sys:String x:Key="LOC_PLAYNITESOUNDS_InstallWMHint">Playnite Sounds может использовать встроенный проигрыватель: "Media Features &gt; Windows Media Player Legacy (App)"</sys:String>
 	<sys:String x:Key="LOC_PLAYNITESOUNDS_Legacy_WMP_NotInstalled" xml:space="preserve">Для работы Playnite Sounds требуется встроенный Windows Media Player.
 
 Хотите установить его сейчас?</sys:String>

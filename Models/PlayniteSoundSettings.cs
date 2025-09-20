@@ -1,4 +1,5 @@
 ﻿using Playnite.SDK.Data;
+using PlayniteSounds.Players;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
@@ -84,6 +85,24 @@ namespace PlayniteSounds.Models
             }
         }
 
+        private bool useWMPLegacyApp = true;
+        public bool UseWMPLegacyApp
+        {
+            get => useWMPLegacyApp;
+            set
+            {
+                WMPIsInstalled = WMPMusicPlayer.WMPIsInstalled();
+                useWMPLegacyApp = WMPMusicPlayer.WMPIsInstalled() && value;
+                OnPropertyChanged();
+            }
+        }
+
+        [DontSerialize]
+        public bool WMPIsInstalled
+        {
+            get => WMPMusicPlayer.WMPIsInstalled();
+            set => OnPropertyChanged();
+        }
 
         [DontSerialize]
         public bool PauseOnDeactivate

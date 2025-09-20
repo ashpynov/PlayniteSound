@@ -16,11 +16,13 @@ namespace PlayniteSounds.Players
 
         void Destroy();
         void Stop();
-        void Play();
+
+        void PreLoad(string filePath, TimeSpan startFrom = default);
+        void Play(TimeSpan startFrom = default);
         void Load(string filePath);
 
         void Close();
-        void Seek(TimeSpan startFrom);
+
         void Pause();
         void Resume();
     }

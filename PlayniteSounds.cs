@@ -142,7 +142,7 @@ namespace PlayniteSounds
                 };
 
                 Localization.SetPluginLanguage(PluginFolder, api.ApplicationSettings.Language);
-                _musicPlayer = MusicPlayer.Create();
+                _musicPlayer = MusicPlayer.Create(Settings);
                 _musicPlayer.MediaEnded += MediaEnded;
                 _musicPlayer.MediaFailed += MediaFailed;
                 _musicFader = new MusicFader(_musicPlayer, Settings);
@@ -261,6 +261,36 @@ namespace PlayniteSounds
 
         public void UpdateDownloadManager(PlayniteSoundsSettings settings)
             => DownloadManager = new DownloadManager(settings, Path.Combine(_musicFilesDataPath,"tmp"));
+
+        public void UpdateMediaPlayer(PlayniteSoundsSettings settings)
+        {
+            if (settings.UseWMPLegacyApp && !WMPMusicPlayer.WMPIsInstalled())
+            {
+                return;
+            }
+            TimeSpan lastPos = _musicPlayer?.CurrentTime ?? default;
+
+            CloseAudioFiles();
+            SubCloseMusic();
+
+            if (_musicPlayer != null)
+            {
+                _musicPlayer.MediaEnded -= MediaEnded;
+                _musicPlayer.MediaFailed -= MediaFailed;
+            }
+
+            _musicFader?.Destroy();
+
+            _musicPlayer = MusicPlayer.Create(Settings);
+            _musicPlayer.MediaEnded += MediaEnded;
+            _musicPlayer.MediaFailed += MediaFailed;
+            _musicFader = new MusicFader(_musicPlayer, Settings);
+
+            if (_prevMusicFileName != string.Empty)
+            {
+                Try(() => SubPlayMusicFromPath(_prevMusicFileName, lastPos));
+            }
+        }
 
 
         private static string HelpLine(string baseMessage)
@@ -757,13 +787,13 @@ namespace PlayniteSounds
         {
             if (_isPlayingBackgroundMusic)
             {
-                _lastBackgroundMusicFileName = _prevMusicFileName;
                 _backgroundMusicPausedOnTime = _musicPlayer.CurrentTime ?? default;
                 _isPlayingBackgroundMusic = false;
             }
         }
         private void PlayBackgroundMusic(List<string> musicFiles)
         {
+
             if (_isPlayingBackgroundMusic && !_musicEnded)
             {
                 return;
@@ -771,7 +801,7 @@ namespace PlayniteSounds
 
             if (_isPlayingBackgroundMusic && _musicEnded)
             {
-                PlayMusicFromFiles(musicFiles);
+                _lastBackgroundMusicFileName = PlayMusicFromFiles(musicFiles);
                 return;
             }
 
@@ -779,15 +809,24 @@ namespace PlayniteSounds
 
             if (string.IsNullOrEmpty(_lastBackgroundMusicFileName) || _backgroundMusicPausedOnTime == default)
             {
-                PlayMusicFromFiles(musicFiles);
+                _lastBackgroundMusicFileName = PlayMusicFromFiles(musicFiles);
             }
-            else if (_lastBackgroundMusicFileName != _prevMusicFileName )
+            else if (_lastBackgroundMusicFileName != _prevMusicFileName)
             {
-                Try(() => _musicFader?.Switch(SubCloseMusic, () => SubPlayMusicFromPath(_lastBackgroundMusicFileName, _backgroundMusicPausedOnTime)));
+                Try(() => _musicFader?.Switch(
+                    SubCloseMusic,
+                    () => PreloadMusicFromPath(_lastBackgroundMusicFileName, _backgroundMusicPausedOnTime),
+                    () => SubPlayMusicFromPath(_lastBackgroundMusicFileName, _backgroundMusicPausedOnTime)
+                ));
+            }
+            else
+            {
+                //Cancel fade and made current fill in
+                Try(() => _musicFader?.Switch(null, null, () => SubPlayMusicFromPath(_lastBackgroundMusicFileName, _backgroundMusicPausedOnTime)));
             }
         }
 
-        private void PlayMusicFromFiles(List<string> musicFiles)
+        private string PlayMusicFromFiles(List<string> musicFiles)
         {
             var musicFile = !string.IsNullOrEmpty(_prevMusicFileName) ? _prevMusicFileName : musicFiles.FirstOrDefault() ?? string.Empty;
             var musicEndRandom = _musicEnded && Settings.RandomizeOnMusicEnd;
@@ -811,6 +850,8 @@ namespace PlayniteSounds
             }
 
             PlayMusicFromPath(musicFile);
+
+            return musicFile;
         }
 
         private void ResumeMusic()
@@ -840,7 +881,7 @@ namespace PlayniteSounds
         {
             if (_musicPlayer?.IsLoaded == true)
             {
-                Try(() => _musicFader?.Switch(SubCloseMusic, null));
+                Try(() => _musicFader?.Switch(SubCloseMusic));
             }
         }
 
@@ -864,6 +905,11 @@ namespace PlayniteSounds
 
         private void PlayMusicFromPath(string filePath)
         {
+            if (!ReloadMusic && filePath == _prevMusicFileName)
+            {
+                Try(() => _musicFader?.Switch(null, null, () => SubPlayMusicFromPath(filePath)));
+                return;
+            }
             //need to use directoryname on verification otherwise when game music randomly changes
             //on musicend music will be restarted when we select another game in for Default or Platform Mode
             //in case of "random music on selection" or "Random Music on Musicend" ReloadMusic will be set
@@ -874,10 +920,15 @@ namespace PlayniteSounds
             {
                 if (File.Exists(filePath))
                 {
-                    Try(() => _musicFader?.Switch(SubCloseMusic, () => SubPlayMusicFromPath(filePath)));
+                    Try(() => _musicFader?.Switch(
+                        SubCloseMusic,
+                        () => PreloadMusicFromPath(filePath),
+                        () => SubPlayMusicFromPath(filePath)
+                    ));
+
                 }
                 else
-                    Try(() => _musicFader?.Switch(SubCloseAndStopMusic, null));
+                    Try(() => _musicFader?.Switch(SubCloseAndStopMusic));
             }
         }
 
@@ -888,6 +939,15 @@ namespace PlayniteSounds
             _prevMusicFileName = string.Empty;
         }
 
+        private void PreloadMusicFromPath(string filePath, TimeSpan startFrom = default)
+        {
+            ReloadMusic = false;
+            if (File.Exists(filePath))
+            {
+                _musicPlayer.PreLoad(filePath, startFrom);
+            }
+        }
+
         private void SubPlayMusicFromPath(string filePath, TimeSpan startFrom = default)
         {
             ReloadMusic = false;
@@ -896,11 +956,8 @@ namespace PlayniteSounds
             {
                 _prevMusicFileName = filePath;
                 _musicPlayer.Load(filePath);
-                _musicPlayer.Play();
-                if (startFrom != default)
-                {
-                    _musicPlayer.Seek(startFrom);
-                }
+                _musicPlayer.Play(startFrom);
+
                 _musicEnded = false;
                 SettingsModel.Settings.CurrentMusicName = Path.GetFileNameWithoutExtension(filePath);
             }
@@ -959,7 +1016,7 @@ namespace PlayniteSounds
             else
             {
                 // MediaPlayer can play multiple sounds together from multiple instances, but the SoundPlayer can not
-                entry.MusicPlayer = MusicPlayer.Create();
+                entry.MusicPlayer = MusicPlayer.Create(Settings);
                 entry.MusicPlayer.Load(fullFileName);
             }
 
@@ -1026,28 +1083,6 @@ namespace PlayniteSounds
             }
         }
 
-        private bool EnableDISMFeature(string featureName)
-        {
-            bool result = false;
-
-            Dialogs.ActivateGlobalProgress(a => Try(() =>
-                {
-                    a.ProgressMaxValue = 100;
-                    a.CurrentProgressValue = 0;
-                    a.Text = $"{ResourceProvider.GetString("LOCSetupRunning")} {featureName}";
-                    a.IsIndeterminate = false;
-
-                    result = Dism.EnableFeature(
-                        featureName,
-                        (progress, message) => {
-                            a.CurrentProgressValue = progress;
-                            a.Text = $"{ResourceProvider.GetString("LOCSetupRunning")} {featureName}\n\n{message}: {progress}%";
-                        });
-
-                }),
-                new GlobalProgressOptions($"{ResourceProvider.GetString("LOCSetupRunning")} {featureName}", false) { IsIndeterminate = false });
-            return result;
-        }
         private void MediaFailed(object sender, ExceptionEventArgs e)
         {
             Logger.Error($"MediaFailed: {e.ErrorException}");
@@ -1062,44 +1097,7 @@ namespace PlayniteSounds
                 _musicFader = null;
                 _musicPlayer = null;
 
-                var optionInstall = new MessageBoxOption("LOCAddonInstall", true, false);
-                var optionSettings = new MessageBoxOption("LOCExtensionsBrowse", false, false);
-                var optionCancel = new MessageBoxOption(ResourceProvider.GetString("LOCCancelLabel"), false, true);
-
-                var res = Dialogs.ShowMessage(
-                                    ResourceProvider.GetString("LOC_PLAYNITESOUNDS_Legacy_WMP_NotInstalled"),
-                                    e.ErrorException.Message,
-                                    MessageBoxImage.Error,
-                                    new List<MessageBoxOption>() { optionInstall, optionSettings, optionCancel });
-
-                if (res == optionInstall)
-                {
-
-                    if (!EnableDISMFeature("WindowsMediaPlayer"))
-                    {
-                        Process.Start(@"optionalfeatures.exe");
-                    }
-                    else if (Dialogs.ShowMessage(
-                        ResourceProvider.GetString("LOCExtInstallationRestartNotif"),
-                        ResourceProvider.GetString("LOCSettingsRestartTitle"),
-                        MessageBoxButton.YesNo) == MessageBoxResult.Yes)
-                    {
-                        object mainModel = PlayniteApi.MainView
-                            .GetType()
-                            .GetField("mainModel", BindingFlags.NonPublic | BindingFlags.Instance)
-                            .GetValue(PlayniteApi.MainView);
-
-                        RelayCommand restartApp = mainModel
-                            .GetType()
-                            .GetProperty("RestartApp", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public)
-                            ?.GetValue(mainModel) as RelayCommand;
-
-                        restartApp?.Execute(null);
-                    }
-                } else if (res == optionSettings)
-                {
-                    Process.Start(@"optionalfeatures.exe");
-                }
+                WMPMusicPlayer.InstallWMP();
             }
         }
         #endregion
@@ -2479,7 +2477,7 @@ namespace PlayniteSounds
             }
         }
 
-        public void Try(Action action) { try { action(); } catch (Exception ex) { HandleException(ex); } }
+        static public void Try(Action action) { try { action(); } catch (Exception ex) { HandleException(ex); } }
 
         private PlayniteSoundsSettings Settings => SettingsModel.Settings;
         private IEnumerable<Game> SelectedGames => PlayniteApi.MainView.SelectedGames;

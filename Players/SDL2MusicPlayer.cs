@@ -4,6 +4,7 @@ using System.Windows.Media;
 using System.Windows.Media.Animation;
 using Playnite.SDK;
 using System.Runtime.InteropServices;
+using System.IO;
 
 namespace PlayniteSounds.Players
 {
@@ -11,6 +12,8 @@ namespace PlayniteSounds.Players
     {
         // Instance variables
         private IntPtr _music = IntPtr.Zero;
+        private IntPtr _preloadedMusic = IntPtr.Zero;
+        private string _preloadedPath = string.Empty;
         private string _source = string.Empty;
         private bool _isDisposed = false;
         private bool _isActive = false;
@@ -79,6 +82,25 @@ namespace PlayniteSounds.Players
 
         public string Source => _source;
 
+
+        public void PreLoad(string filePath, TimeSpan startFrom = default)
+        {
+            EnsureNotDisposed();
+            if (_preloadedMusic != IntPtr.Zero)
+            {
+                SDL2Mixer.Mix_FreeMusic(_preloadedMusic);
+                _preloadedMusic = IntPtr.Zero;
+                _preloadedPath = string.Empty;
+            }
+
+            _preloadedMusic = SDL2Mixer.Mix_LoadMUS(filePath);
+            if (_preloadedMusic == IntPtr.Zero)
+            {
+                throw new Exception($"Failed to load music! SDL Error: {SDL2.SDL_GetError()}");
+            }
+            _preloadedPath = filePath;
+        }
+
         public void Load(string filePath)
         {
             try
@@ -87,10 +109,31 @@ namespace PlayniteSounds.Players
 
                 Close();
 
-                _music = SDL2Mixer.Mix_LoadMUS(filePath);
-                if (_music == IntPtr.Zero)
+                if (_preloadedMusic != IntPtr.Zero)
                 {
-                    throw new Exception( $"Failed to load music! SDL Error: {SDL2.SDL_GetError()}");
+                    if (_preloadedPath == filePath)
+                    {
+                        if (_music != IntPtr.Zero)
+                        {
+                            SDL2Mixer.Mix_FreeMusic(_preloadedMusic);
+                        }
+                        _music = _preloadedMusic;
+                        _preloadedMusic = IntPtr.Zero;
+                    }
+                    else
+                    {
+                        SDL2Mixer.Mix_FreeMusic(_preloadedMusic);
+                        _preloadedMusic = IntPtr.Zero;
+                        _preloadedPath = string.Empty;
+                    }
+                }
+                else
+                {
+                    _music = SDL2Mixer.Mix_LoadMUS(filePath);
+                    if (_music == IntPtr.Zero)
+                    {
+                        throw new Exception($"Failed to load music! SDL Error: {SDL2.SDL_GetError()}");
+                    }
                 }
 
                 _source = filePath;
@@ -105,7 +148,7 @@ namespace PlayniteSounds.Players
             }
         }
 
-        public void Play()
+        public void Play(TimeSpan startFrom = default)
         {
             try
             {
@@ -119,6 +162,11 @@ namespace PlayniteSounds.Players
                 {
 
                     throw new Exception($"Failed to play music! SDL Error: {SDL2.SDL_GetError()}");
+                }
+
+                if (startFrom != default)
+                {
+                    SDL2Mixer.Mix_SetMusicPosition(startFrom.TotalSeconds);
                 }
                 _isActive = true;
 
@@ -151,16 +199,8 @@ namespace PlayniteSounds.Players
 
         public void Stop()
         {
-            SDL2Mixer.Mix_HaltMusic();
             _isActive = false;
-        }
-
-        public void Seek(TimeSpan startFrom)
-        {
-            if (_isLoaded)
-            {
-                SDL2Mixer.Mix_SetMusicPosition(startFrom.TotalSeconds);
-            }
+            SDL2Mixer.Mix_HaltMusic();
         }
 
         public void Close()
@@ -185,12 +225,21 @@ namespace PlayniteSounds.Players
 
         private void OnMusicFinishedInternal()
         {
-            _isActive = false;
-            MediaEnded?.Invoke(this, EventArgs.Empty);
+            if (_isActive)
+            {
+                _isActive = false;
+                MediaEnded?.Invoke(this, EventArgs.Empty);
+            }
         }
 
         public void Dispose()
         {
+            if (_preloadedMusic != IntPtr.Zero)
+            {
+                SDL2Mixer.Mix_FreeMusic(_preloadedMusic);
+                _preloadedMusic = IntPtr.Zero;
+                _preloadedPath = string.Empty;
+            }
             Dispose(true);
             GC.SuppressFinalize(this);
         }

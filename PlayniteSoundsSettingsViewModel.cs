@@ -2,6 +2,7 @@
 using Playnite.SDK.Data;
 using PlayniteSounds.Common.Extensions;
 using PlayniteSounds.Models;
+using PlayniteSounds.Players;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -45,11 +46,23 @@ namespace PlayniteSounds
                 }
             });
         }
+
+        public RelayCommand InstallWMPCommand
+        {
+            get => new RelayCommand(() =>
+            {
+                if (WMPMusicPlayer.InstallWMP())
+                {
+                    Settings.WMPIsInstalled = true;
+                }
+            });
+        }
+
         public RelayCommand<object> NavigateUrlCommand
         {
             get => new RelayCommand<object>((url) =>
             {
-                _plugin.Try(() => Process.Start(new Uri(url.ToString()).AbsoluteUri));
+                PlayniteSounds.Try(() => Process.Start(new Uri(url.ToString()).AbsoluteUri));
             });
         }
 
@@ -122,8 +135,21 @@ namespace PlayniteSounds
 
                 _plugin.ReloadMusic = _plugin.ReloadMusic || musicTypeChanged || musicStateChanged || DetailsMusicType;
 
+                var replayMusic = _plugin.ReloadMusic
+                    || Settings.ChoosenMusicType != EditingClone.ChoosenMusicType
+                    || Settings.PlayBackupMusic != EditingClone.PlayBackupMusic
+                    || Settings.CollectFromGames != EditingClone.CollectFromGames
+                    || Settings.CollectFromGamesOnBackup != EditingClone.CollectFromGamesOnBackup;
+
+                if (Settings.UseWMPLegacyApp != EditingClone.UseWMPLegacyApp)
+                {
+                    _plugin.UpdateMediaPlayer(Settings);
+                }
                 _plugin.UpdateDownloadManager(Settings);
-                _plugin.ReplayMusic();
+                if (replayMusic)
+                {
+                    _plugin.ReplayMusic();
+                }
                 _plugin.ResetMusicVolume();
             }
             catch (Exception e)

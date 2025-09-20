@@ -184,6 +184,22 @@
                                   Content="{DynamicResource LOC_PLAYNITESOUNDS_ChkCollectFromGamesOnBackup}"/>
                         <CheckBox Name="ChkTagMissing" Grid.Row="30" Grid.ColumnSpan="2" IsChecked="{Binding Settings.TagMissingEntries}" Content="{DynamicResource LOC_PLAYNITESOUNDS_ChkTagMissing}"/>
                         <CheckBox Name="ChkTagNormal" Grid.Row="32" Grid.ColumnSpan="2" IsChecked="{Binding Settings.TagNormalizedGames}" Content="{DynamicResource LOC_PLAYNITESOUNDS_Normalize_Tag}"/>
+
+                        <DockPanel Grid.Row="34" Grid.ColumnSpan="2" >
+                            <TextBlock VerticalAlignment="Center" Margin="10,0,0,0"
+                                    DockPanel.Dock="Right"
+                                    ToolTip="{DynamicResource LOC_PLAYNITESOUNDS_InstallWMHint}">
+                                <Hyperlink
+                                        Command="{Binding InstallWMPCommand}" >
+                                        <Run Text="{DynamicResource LOC_PLAYNITESOUNDS_InstallWMP}" />
+                                </Hyperlink>
+                            </TextBlock>
+                            <CheckBox Name="ChkUseWMPLegacyApp"
+                                      IsChecked="{Binding Settings.UseWMPLegacyApp}"
+                                      IsEnabled="{Binding Settings.WMPIsInstalled}"
+                                      Content="{DynamicResource LOC_PLAYNITESOUNDS_ChkUseWMPLegacyApp}"/>
+                        </DockPanel>
+
                     </Grid>
                 </GroupBox>
                 <GroupBox Header="{DynamicResource LOC_PLAYNITESOUNDS_Actions_Download}" Grid.Row="1" Grid.ColumnSpan="2"  Margin="0,5,0,0">

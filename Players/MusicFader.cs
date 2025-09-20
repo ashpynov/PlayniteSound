@@ -18,6 +18,7 @@ namespace PlayniteSounds.Players
         private Action pauseAction;
         private Action stopAction;
         private Action playAction;
+        private Action preloadAction;
 
         private bool isPaused = false;
 
@@ -45,6 +46,12 @@ namespace PlayniteSounds.Players
 
         void TimerTick()
         {
+            if (preloadAction !=null )
+            {
+                preloadAction?.Invoke();
+                preloadAction = null;
+            }
+
             double musicVolume = settings.MusicVolume / 100.0;
             double fadeFrequency = 20; // 10 steps per second
 
@@ -77,17 +84,17 @@ namespace PlayniteSounds.Players
 
             if (player.Volume >= musicVolume)
             {
-                Logger.Trace($"Fade In: Complete in {(DateTime.Now - lastCall).TotalMilliseconds} ms");
+                // Logger.Trace($"Fade In: Complete in {(DateTime.Now - lastCall).TotalMilliseconds} ms");
                 return;
             }
             else if (player.Volume == 0 && pauseAction == null && playAction != null)
             {
                 stopAction?.Invoke();
+                player.Volume = 0;
                 playAction.Invoke();
                 stopAction = playAction = null;
                 isFadingOut = false;
-                player.Volume = fadeStep;
-                Logger.Trace($"Fade Out: done, in {(DateTime.Now - lastCall).TotalMilliseconds} ms, do fade In");
+                // Logger.Trace($"Fade Out: done, in {(DateTime.Now - lastCall).TotalMilliseconds} ms, do fade In");
             }
             else if (player.Volume == 0 && (pauseAction != null || stopAction != null))
             {
@@ -95,7 +102,7 @@ namespace PlayniteSounds.Players
                 stopAction?.Invoke();
                 isPaused = pauseAction != null;
                 stopAction = pauseAction = null;
-                Logger.Trace($"Fade Out: Complete in {(DateTime.Now - lastCall).TotalMilliseconds} ms");
+                // Logger.Trace($"Fade Out: Complete in {(DateTime.Now - lastCall).TotalMilliseconds} ms");
                 return;
             }
             fadeTimer?.Start();
@@ -116,11 +123,25 @@ namespace PlayniteSounds.Players
             EnsureTimer();
         }
 
-        public void Switch(Action stopAction, Action playAction)
+        public void Switch(Action stopAction, Action preloadAction = null, Action playAction = null)
         {
-            isFadingOut = true;
+            this.preloadAction = preloadAction;
             this.playAction = playAction;
             this.stopAction = stopAction;
+
+            if (stopAction == null)
+            {
+                if (isFadingOut)
+                {
+                    this.playAction = null;
+                    this.preloadAction = null;
+                    isFadingOut = false;
+                }
+            }
+            else
+            {
+                isFadingOut = true;
+            }
             EnsureTimer();
         }
 

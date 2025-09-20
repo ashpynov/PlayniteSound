@@ -14,8 +14,15 @@ namespace PlayniteSounds.Players.SDL
         [DllImport(NativeLibName, CallingConvention = CallingConvention.Cdecl)]
         public static extern int Mix_CloseAudio();
 
-        [DllImport(NativeLibName, CallingConvention = CallingConvention.Cdecl)]
-        public static extern IntPtr Mix_LoadMUS(string file);
+        [DllImport(NativeLibName, EntryPoint = "Mix_LoadMUS", CallingConvention = CallingConvention.Cdecl)]
+		private static extern IntPtr INTERNAL_Mix_LoadMUS(IntPtr file);
+		public static IntPtr Mix_LoadMUS(string file)
+        {
+            IntPtr fileUtf8 = SDL2.StringToUtf8(file);
+            IntPtr handle = INTERNAL_Mix_LoadMUS(fileUtf8);
+			Marshal.FreeHGlobal(fileUtf8);
+			return handle;
+		}
 
         [DllImport(NativeLibName, CallingConvention = CallingConvention.Cdecl)]
         public static extern int Mix_FreeMusic(IntPtr music);

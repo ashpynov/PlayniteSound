@@ -216,7 +216,7 @@ namespace PlayniteSounds.ViewModels
             window.Owner = PlayniteApi.Dialogs.GetCurrentAppWindow();
             window.WindowStartupLocation = WindowStartupLocation.CenterOwner;
 
-            _musicPlayer = MusicPlayer.Create();
+            _musicPlayer = MusicPlayer.Create(settings);
             _musicPlayer.MediaEnded += MediaEnded;
 
             return window.ShowDialog();

@@ -1,14 +1,16 @@
+using PlayniteSounds.Models;
+
 namespace PlayniteSounds.Players
 {
     public class MusicPlayer
     {
-        static public IMusicPlayer Create()
+        static public IMusicPlayer Create(PlayniteSoundsSettings settings)
         {
-            try
+            if (settings.UseWMPLegacyApp && WMPMusicPlayer.WMPIsInstalled())
             {
                 return new WMPMusicPlayer();
             }
-            catch
+            else
             {
                 return new SDL2MusicPlayer();
             }

@@ -27,6 +27,8 @@
 
 	<sys:String x:Key="LOC_PLAYNITESOUNDS_Normalize">Normaliser automatiquement la musique lors du téléchargement</sys:String>
 	<sys:String x:Key="LOC_PLAYNITESOUNDS_Normalize_Tag">Taguer les jeux normalisés</sys:String>
+	<sys:String x:Key="LOC_PLAYNITESOUNDS_ChkUseWMPLegacyApp">Utilisez l'application Windows Media Player Legacy (si disponible)</sys:String>
+
 	<sys:String x:Key="LOC_PLAYNITESOUNDS_FF_Path">Chemin de FFmpeg :</sys:String>
 	<sys:String x:Key="LOC_PLAYNITESOUNDS_FF_Hint">FFmpeg est requis pour la normalisation audio et le téléchargement</sys:String>
 	<sys:String x:Key="LOC_PLAYNITESOUNDS_FFNorm_Path">Chemin de ffmpeg-normalize :</sys:String>

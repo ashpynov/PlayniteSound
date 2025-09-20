@@ -1,5 +1,14 @@
 AddonId: 'Playnite.Sounds.Mod.baf1744c-72f6-4bc1-92cc-474403b279fb'
 Packages:
+  - Version: 5.8.2
+    RequiredApiVersion: 6.11.0
+    ReleaseDate: 2025-09-20
+    PackageUrl: https://github.com/ashpynov/PlayniteSound/releases/download/v5.8.2/Playnite.Sounds.Mod.baf1744c-72f6-4bc1-92cc-474403b279fb_5_8_2.pext
+    Changelog:
+      - Quick scroll transition fixes #26
+      - Proper pausing of background music #39
+      - Preloading of next music of fadeout phase to improve smoothness of transition
+      - Configurable Media Player or SDL Mixer for playback
   - Version: 5.8.1
     RequiredApiVersion: 6.11.0
     ReleaseDate: 2025-09-15

@@ -103,6 +103,7 @@ namespace PlayniteSounds
 
         #region Constructor
 
+
         public PlayniteSounds(IPlayniteAPI api) : base(api)
         {
             playniteAPI = api;
@@ -135,7 +136,7 @@ namespace PlayniteSounds
                 Directory.CreateDirectory(_gameMusicFilePath);
 
                 SettingsModel = new PlayniteSoundsSettingsViewModel(this);
-                SettingsModel.Settings.PropertyChanged += OnSettingsChanged;
+
                 Properties = new GenericPluginProperties
                 {
                     HasSettings = true
@@ -143,10 +144,7 @@ namespace PlayniteSounds
 
                 Localization.SetPluginLanguage(PluginFolder, api.ApplicationSettings.Language);
                 _musicPlayer = MusicPlayer.Create(Settings);
-                _musicPlayer.MediaEnded += MediaEnded;
-                _musicPlayer.MediaFailed += MediaFailed;
                 _musicFader = new MusicFader(_musicPlayer, Settings);
-
 
                 _gameMenuItems = new List<GameMenuItem>
                 {
@@ -167,11 +165,8 @@ namespace PlayniteSounds
                     ConstructMainMenuItem(Resource.ActionsCopySelectMusicFile, SelectMusicForDefault, "|" + Resource.ActionsDefault),
                 };
 
-                DownloadManager = new DownloadManager(Settings, Path.Combine(_musicFilesDataPath,"tmp"));
+                DownloadManager = new DownloadManager(Settings, Path.Combine(_musicFilesDataPath, "tmp"));
 
-                PlayniteApi.Database.Games.ItemCollectionChanged += CleanupDeletedGames;
-                PlayniteApi.Database.Platforms.ItemCollectionChanged += UpdatePlatforms;
-                PlayniteApi.Database.FilterPresets.ItemCollectionChanged += UpdateFilters;
                 PlayniteApi.UriHandler.RegisterSource("Sounds", HandleUriEvent);
 
                 #region Control constructor
@@ -181,7 +176,6 @@ namespace PlayniteSounds
                     SourceName = "Sounds",
                     ElementList = new List<string> { "MusicControl" }
                 });
-                MenuWindowMonitor.Attach(PlayniteApi, SettingsModel.Settings);
 
                 #endregion
                 AddSettingsSupport(new AddSettingsSupportArgs
@@ -189,16 +183,8 @@ namespace PlayniteSounds
                     SourceName = "Sounds",
                     SettingsRoot = $"{nameof(SettingsModel)}.{nameof(SettingsModel.Settings)}"
                 });
-                if (SettingsModel.Settings.PauseOnTrailer)
-                    MediaElementsMonitor.Attach(PlayniteApi, SettingsModel.Settings);
 
-                //if (PlayniteApi.ApplicationInfo.Mode == ApplicationMode.Fullscreen)
-                {
-                    (GetMainModel() as ObservableObject).PropertyChanged += OnMainModelChanged;
-                }
                 SupressNativeFulscreenMusic();
-
-
             }
             catch (Exception e)
             {
@@ -206,12 +192,42 @@ namespace PlayniteSounds
             }
         }
 
-        public void OnMainModelChanged( object sender, PropertyChangedEventArgs args)
+        private void SetupEventHandlers()
+        {
+            _musicPlayer.MediaEnded += MediaEnded;
+            _musicPlayer.MediaFailed += MediaFailed;
+
+            SettingsModel.Settings.PropertyChanged += OnSettingsChanged;
+            PlayniteApi.Database.Games.ItemCollectionChanged += CleanupDeletedGames;
+            PlayniteApi.Database.Platforms.ItemCollectionChanged += UpdatePlatforms;
+            PlayniteApi.Database.FilterPresets.ItemCollectionChanged += UpdateFilters;
+
+            MenuWindowMonitor.Attach(PlayniteApi, SettingsModel.Settings);
+            if (SettingsModel.Settings.PauseOnTrailer)
+            {
+                MediaElementsMonitor.Attach(PlayniteApi, SettingsModel.Settings);
+            }
+
+            //if (PlayniteApi.ApplicationInfo.Mode == ApplicationMode.Fullscreen)
+            {
+                (GetMainModel() as ObservableObject).PropertyChanged += OnMainModelChanged;
+            }
+            SystemEvents.PowerModeChanged += OnPowerModeChanged;
+            Application.Current.MainWindow.StateChanged += OnWindowStateChanged;
+            Application.Current.Deactivated += OnApplicationDeactivate;
+            Application.Current.Activated += OnApplicationActivate;
+
+            dynamic ctx = Application.Current.MainWindow.DataContext;
+            (ctx.AppSettings.Fullscreen as INotifyPropertyChanged).PropertyChanged += Fullscreen_PropertyChanged;
+        }
+
+
+        public void OnMainModelChanged(object sender, PropertyChangedEventArgs args)
         {
             if (args.PropertyName == "GameDetailsVisible")
             {
                 SettingsModel.Settings.GameDetailsVisible = GetMainModel().GameDetailsVisible;
-                if ( SettingsModel.Settings.DetailsMusicType != MusicType.Same
+                if (SettingsModel.Settings.DetailsMusicType != MusicType.Same
                   && SettingsModel.Settings.DetailsMusicType != SettingsModel.Settings.MusicType)
                 {
                     ReplayMusic();
@@ -381,24 +397,9 @@ namespace PlayniteSounds
             UpdateFromLegacyVersion();
             CopyAudioFiles();
 
+            SetupEventHandlers();
+
             PlaySoundFileFromName(SoundFile.ApplicationStartedSound);
-
-            SystemEvents.PowerModeChanged += OnPowerModeChanged;
-            Application.Current.MainWindow.StateChanged += OnWindowStateChanged;
-            Application.Current.Deactivated += OnApplicationDeactivate;
-            Application.Current.Activated += OnApplicationActivate;
-
-            dynamic ctx = Application.Current.MainWindow.DataContext;
-            (ctx.AppSettings.Fullscreen as INotifyPropertyChanged).PropertyChanged += Fullscreen_PropertyChanged;
-
-            // Application.Current.MainWindow.KeyDown += (_, e) =>
-            // {
-            //     if (e.Key == Key.MediaNextTrack)
-            //     {
-            //         PlayMusicBasedOnSelected();
-            //         e.Handled = true;
-            //     }
-            // };
         }
 
         public override void OnApplicationStopped(OnApplicationStoppedEventArgs args)

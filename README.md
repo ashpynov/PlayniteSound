@@ -45,6 +45,23 @@ SFXR: https://www.drpetter.se/project_sfxr.html
 
 Audacity: https://www.audacityteam.org/
 
+## Python / ffmpeg-normalize Setup
+
+Some features of Playnite Sounds require `ffmpeg-normalize`. On Windows:
+
+1. Install Python from [python.org](https://www.python.org/downloads/) and check **“Add Python to PATH.”**  
+2. Open **Command Prompt** and run:  
+```
+python -m pip install ffmpeg-normalize
+```
+3.	Locate the executable, usually:
+```
+C:\Users\<YourUser>\AppData\Local\Python\pythoncore-3.14-64\Scripts\ffmpeg-normalize.exe
+```
+4.	In Playnite, point the plugin to this .exe file.
+
+This ensures audio normalization features work correctly.
+
 ## Translation
 The project is translatable on [Crowdin](https://crowdin.com/project/playnite-game-speak)
 

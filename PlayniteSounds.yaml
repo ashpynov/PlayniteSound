@@ -1,5 +1,11 @@
 AddonId: 'Playnite.Sounds.Mod.baf1744c-72f6-4bc1-92cc-474403b279fb'
 Packages:
+  - Version: 5.8.3
+    RequiredApiVersion: 6.11.0
+    ReleaseDate: 2026-02-27
+    PackageUrl: https://github.com/ashpynov/PlayniteSound/releases/download/v5.8.3/Playnite.Sounds.Mod.baf1744c-72f6-4bc1-92cc-474403b279fb_5_8_3.pext
+    Changelog:
+      - Removed music source to avoid DMCA strikes
   - Version: 5.8.2
     RequiredApiVersion: 6.11.0
     ReleaseDate: 2025-09-20

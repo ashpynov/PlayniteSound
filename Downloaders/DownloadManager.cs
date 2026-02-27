@@ -24,14 +24,12 @@ namespace PlayniteSounds.Downloaders
 
         private readonly PlayniteSoundsSettings _settings;
         static private string _tempPath;
-        private readonly IDownloader _khDownloader;
         private readonly IDownloader _ytDownloader;
 
         public DownloadManager(PlayniteSoundsSettings settings, string tempPath)
         {
             _settings = settings;
             _tempPath = tempPath;
-            _khDownloader = new KhDownloader(HttpClient, Web);
             _ytDownloader = new YtDownloader(HttpClient, _settings);
             Cleanup();
         }
@@ -176,7 +174,6 @@ namespace PlayniteSounds.Downloaders
         {
             switch (source)
             {
-                case Source.KHInsider: return _khDownloader;
                 case Source.Youtube:   return _ytDownloader;
                 default: throw new ArgumentException($"Unrecognized download source: {source}");
             }

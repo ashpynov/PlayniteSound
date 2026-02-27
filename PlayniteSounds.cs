@@ -450,14 +450,6 @@ namespace PlayniteSounds
         {
             var gameMenuItems = new List<GameMenuItem>();
 
-            if (Settings.Downloaders.Contains(Source.KHInsider))
-            {
-                gameMenuItems.Add(ConstructGameMenuItem(
-                    "All", _ => DownloadMusicForSelectedGames(Source.All), "|" + Resource.Actions_Download));
-                gameMenuItems.Add(ConstructGameMenuItem(
-                    "KHInsider", _ => DownloadMusicForSelectedGames(Source.KHInsider), "|" + Resource.Actions_Download));
-            }
-
             gameMenuItems.AddRange(_gameMenuItems);
 
             if (SingleGame())
